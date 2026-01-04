@@ -1,1 +1,186 @@
-<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>NexusOS</title><link href='https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap' rel='stylesheet'><style>:root{--bg: #0a0a0c;--glass: rgba(255, 255, 255, 0.05);--border: rgba(255, 255, 255, 0.1);--accent: #00f2ff;--text: #e0e0e0;}*{box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif;}body{background: radial-gradient(circle at center, #1a1a2e 0%, #0a0a0c 100%); height: 100vh; width: 100vw; overflow: hidden; color: var(--text); user-select: none;}#desktop{width: 100%; height: calc(100% - 60px); padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, 100px); grid-template-rows: repeat(auto-fill, 110px); gap: 20px; align-content: start;}.icon{display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100px; height: 110px; cursor: pointer; transition: background 0.2s; border-radius: 8px; border: 1px solid transparent;}.icon:hover{background: var(--glass); border: 1px solid var(--border);}.icon svg{width: 48px; height: 48px; margin-bottom: 8px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));}.icon span{font-size: 12px; text-align: center; text-shadow: 0 2px 4px rgba(0,0,0,0.5); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 90px;}#taskbar{position: fixed; bottom: 0; width: 100%; height: 60px; background: rgba(10, 10, 12, 0.8); backdrop-filter: blur(20px); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: center; z-index: 9999;}.taskbar-inner{display: flex; gap: 15px; align-items: center;}.window{position: absolute; min-width: 400px; min-height: 300px; background: rgba(15, 15, 20, 0.95); backdrop-filter: blur(15px); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); display: flex; flex-direction: column; overflow: hidden; resize: both; z-index: 100;}.window-header{height: 40px; background: var(--glass); display: flex; align-items: center; justify-content: space-between; padding: 0 15px; cursor: move; border-bottom: 1px solid var(--border);}.window-title{font-size: 13px; font-weight: 600; color: var(--accent); letter-spacing: 0.5px;}.close-btn{width: 12px; height: 12px; border-radius: 50%; background: #ff5f56; border: none; cursor: pointer; transition: 0.2s;}.close-btn:hover{filter: brightness(1.2);}.window-content{flex: 1; padding: 15px; overflow: auto;}.app-frame{width: 100%; height: 100%; border: none; background: #fff;}.ujs-creator{display: flex; flex-direction: column; gap: 10px;}.ujs-creator textarea{background: #111; color: #0f0; font-family: 'Courier New', monospace; border: 1px solid var(--border); border-radius: 5px; padding: 10px; height: 200px; outline: none; resize: none;}.ujs-btn{background: var(--accent); color: #000; border: none; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; transition: 0.2s;}.ujs-btn:hover{opacity: 0.8;}.clock{position: absolute; right: 20px; font-size: 14px; font-weight: 300; color: var(--accent);}</style></head><body><div id='desktop'></div><div id='taskbar'><div class='taskbar-inner'><div class='icon' style='width: 40px; height: 40px;' onclick='openUJSGenerator()'><svg viewBox='0 0 24 24' fill='none' stroke='#00f2ff' stroke-width='2'><path d='M12 2v20M2 12h20'/></svg></div><div class='icon' style='width: 40px; height: 40px;' onclick='document.getElementById("fileImporter").click()'><svg viewBox='0 0 24 24' fill='none' stroke='#00f2ff' stroke-width='2'><path d='M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12'/></svg></div></div><div class='clock' id='clock'>00:00:00</div></div><input type='file' id='fileImporter' style='display:none' accept='.ujs,.html' onchange='importApp(this)'><script>const desktop = document.getElementById('desktop'); const clock = document.getElementById('clock'); let windowCount = 0; function updateClock(){const now = new Date(); clock.innerText = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'});} setInterval(updateClock, 1000); updateClock(); function createAppIcon(name, content, id) { const icon = document.createElement('div'); icon.className = 'icon'; icon.innerHTML = `<svg viewBox='0 0 24 24' fill='none' stroke='var(--accent)' stroke-width='1.5'><rect x='3' y='3' width='18' height='18' rx='2' ry='2'></rect><path d='M9 10l3 3 3-3'></path></svg><span>${name}</span>`; icon.onclick = () => openApp(name, content); desktop.appendChild(icon); } function openApp(name, content) { windowCount++; const win = document.createElement('div'); win.className = 'window'; win.style.left = (50 + windowCount * 20) + 'px'; win.style.top = (50 + windowCount * 20) + 'px'; win.innerHTML = `<div class='window-header'><span class='window-title'>${name}</span><button class='close-btn' onclick='this.closest(".window").remove()'></button></div><div class='window-content'><iframe class='app-frame' srcdoc='${content.replace(/'/g, "&apos;")}'></iframe></div>`; document.body.appendChild(win); makeDraggable(win); } function makeDraggable(el) { let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0; const header = el.querySelector('.window-header'); header.onmousedown = (e) => { e.preventDefault(); pos3 = e.clientX; pos4 = e.clientY; document.onmouseup = () => { document.onmouseup = null; document.onmousemove = null; }; document.onmousemove = (e) => { e.preventDefault(); pos1 = pos3 - e.clientX; pos2 = pos4 - e.clientY; pos3 = e.clientX; pos4 = e.clientY; el.style.top = (el.offsetTop - pos2) + 'px'; el.style.left = (el.offsetLeft - pos1) + 'px'; }; }; } function openUJSGenerator() { const content = `<div class='ujs-creator'><h3>App Factory</h3><input type='text' id='appName' placeholder='App Name' style='background:#111;color:#fff;border:1px solid #333;padding:8px;border-radius:4px;'><textarea id='appCode' placeholder='Paste HTML/JS code here...'></textarea><button class='ujs-btn' onclick='window.parent.downloadUJS()'>Build & Download .ujs</button></div>`; openApp('UJS Creator', content); } window.downloadUJS = () => { const name = document.querySelector('iframe').contentDocument.getElementById('appName').value || 'New App'; const code = document.querySelector('iframe').contentDocument.getElementById('appCode').value; if(!code) return alert('No code provided'); const blob = new Blob([code], {type: 'text/plain'}); const lnk = document.createElement('a'); lnk.href = URL.createObjectURL(blob); lnk.download = name + '.ujs'; lnk.click(); createAppIcon(name, code, Date.now()); }; function importApp(input) { const file = input.files[0]; if(!file) return; const reader = new FileReader(); reader.onload = (e) => { const content = e.target.result; const name = file.name.replace('.ujs', '').replace('.html', ''); createAppIcon(name, content, Date.now()); }; reader.readAsText(file); input.value = ''; } createAppIcon('Welcome', '<h1>Welcome to NexusOS</h1><p>This OS allows you to create apps using HTML and export them as <b>.ujs</b> files.</p><style>body{background:#000;color:#0f0;display:flex;flex-direction:column;justify-content:center;align-items:center;height:100vh;text-align:center;font-family:sans-serif;}</style>', 'welcome');</script></body></html>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>NexusOS 3.5 - PC Desktop</title>
+    <style>
+        :root { --blue: #00d4ff; --dark: #0a0a0c; --win: #1a1a1d; --taskbar: rgba(10, 10, 15, 0.9); }
+        * { box-sizing: border-box; }
+        body { margin:0; background:var(--dark); color:white; font-family:'Segoe UI', sans-serif; overflow:hidden; }
+        
+        /* Desktop */
+        #desktop { 
+            width:100vw; height:calc(100vh - 45px); 
+            background: radial-gradient(circle, #1e1e2f, #050505);
+            position:relative; padding: 20px; display: flex; flex-direction: column; flex-wrap: wrap; gap: 20px; align-content: flex-start;
+        }
+
+        /* App Icons on Desktop */
+        .icon { 
+            width:90px; height:100px; text-align:center; cursor:pointer; 
+            border-radius: 8px; transition: 0.2s; padding: 10px;
+        }
+        .icon:hover { background: rgba(255,255,255,0.1); }
+        .icon img { width:45px; height:45px; display: block; margin: 0 auto 5px; filter: drop-shadow(0 0 5px var(--blue)); }
+        .icon span { font-size:12px; text-shadow: 1px 1px 3px black; overflow: hidden; display: block; }
+
+        /* Windows */
+        .window { position:absolute; background:var(--win); border:1px solid #333; border-radius:8px; display:none; flex-direction:column; box-shadow:0 15px 50px rgba(0,0,0,0.9); z-index:10; }
+        .win-header { background:#25252b; padding:10px; cursor:move; display:flex; justify-content:space-between; font-size:12px; border-radius:8px 8px 0 0; }
+        .win-body { flex-grow:1; position:relative; overflow:auto; padding: 10px; }
+        
+        /* Taskbar */
+        #taskbar { 
+            position:fixed; bottom:0; width:100%; height:45px; background:var(--taskbar); 
+            display:flex; align-items:center; padding:0 10px; border-top:1px solid #333; z-index:1000;
+            backdrop-filter: blur(10px);
+        }
+        .start-btn { background:var(--blue); color:black; padding:5px 15px; border-radius:4px; font-weight:bold; cursor:pointer; margin-right: 15px; }
+        .clock { margin-left: auto; font-size: 13px; font-family: monospace; }
+
+        /* Form Elements */
+        textarea { width:100%; height:250px; background:#000; color:#0f0; border:1px solid #444; font-family:monospace; padding:10px; margin-bottom: 10px; }
+        input { background: #222; border: 1px solid #444; color: white; padding: 5px; margin-bottom: 5px; width: 100%; }
+        .btn { background:var(--blue); border:none; padding:10px; font-weight:bold; cursor:pointer; color: black; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div id="desktop">
+    <div class="icon" onclick="openApp('dev-suite')">
+        <img src="https://cdn-icons-png.flaticon.com/512/4248/4248443.png">
+        <span>App Creator</span>
+    </div>
+    
+    <div class="icon" onclick="document.getElementById('file-input').click()">
+        <img src="https://cdn-icons-png.flaticon.com/512/2997/2997843.png">
+        <span>Instalar .ujs</span>
+    </div>
+    <input type="file" id="file-input" style="display:none" onchange="importApp(event)">
+</div>
+
+<div id="dev-suite" class="window" style="width:500px; left:120px; top:50px;">
+    <div class="win-header">Nexus Developer Suite <span onclick="closeApp('dev-suite')" style="cursor:pointer;color:red">✖</span></div>
+    <div class="win-body">
+        <label>Nombre de la App:</label>
+        <input type="text" id="app-name" placeholder="Mi App">
+        <label>URL del Icono (PNG):</label>
+        <input type="text" id="app-icon-url" placeholder="https://cdn-icons-png.flaticon.com/512/888/888859.png">
+        <textarea id="editor">// Código UJS
+const app = {
+    onLoad: function() {
+        ui.createWindow({ title: "App Instalada", background: "#111" });
+        ui.addText("t1", { text: "¡Funciona!", y: 50, fontSize: 24, color: "#fff" });
+    }
+};
+app.onLoad();</textarea>
+        <button class="btn" onclick="exportApp()">DESCARGAR E INSTALAR (.ujs)</button>
+    </div>
+</div>
+
+<div id="runtime" class="window" style="width:350px; height:450px; left:650px; top:50px;">
+    <div class="win-header"><span id="rt-title">Nexus Runtime</span> <span onclick="closeApp('runtime')" style="cursor:pointer;color:red">✖</span></div>
+    <div id="web-content" class="win-body"></div>
+</div>
+
+<div id="taskbar">
+    <div class="start-btn" onclick="alert('NexusOS 3.5 Menu')">NEXUS</div>
+    <div id="open-apps-icons" style="display:flex; gap:10px;"></div>
+    <div class="clock" id="clock">00:00:00</div>
+</div>
+
+<script>
+// --- KERNEL CORE ---
+const ui = {
+    createWindow: function(cfg) {
+        document.getElementById('rt-title').innerText = cfg.title;
+        const container = document.getElementById('web-content');
+        container.innerHTML = "";
+        container.style.background = cfg.background || "#fff";
+        openApp('runtime');
+    },
+    addText: function(id, cfg) {
+        const t = document.createElement('div');
+        t.id = id; t.innerText = cfg.text;
+        t.style.cssText = `position:absolute; width:100%; text-align:center; top:${cfg.y}px; font-size:${cfg.fontSize}px; color:${cfg.color};`;
+        document.getElementById('web-content').appendChild(t);
+    },
+    addWebView: function(id, cfg) {
+        const f = document.createElement('iframe');
+        f.style.cssText = `width:100%; height:100%; border:none;`;
+        f.src = cfg.url;
+        document.getElementById('web-content').appendChild(f);
+    }
+};
+
+const sys = { exit: () => closeApp('runtime') };
+
+// --- SYSTEM FUNCTIONS ---
+function openApp(id) { document.getElementById(id).style.display = 'flex'; }
+function closeApp(id) { document.getElementById(id).style.display = 'none'; }
+
+// EXPORTAR APP CON METADATOS
+function exportApp() {
+    const name = document.getElementById('app-name').value || "Sin Nombre";
+    const icon = document.getElementById('app-icon-url').value || "https://cdn-icons-png.flaticon.com/512/888/888859.png";
+    const code = document.getElementById('editor').value;
+
+    const fullFile = `/*METADATA:{"name":"${name}","icon":"${icon}"}*/\n${code}`;
+    
+    const blob = new Blob([fullFile], {type: 'text/javascript'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${name.replace(/\s/g, '_')}.ujs`;
+    a.click();
+    
+    // Instalar instantáneamente en el escritorio
+    createDesktopIcon(name, icon, code);
+}
+
+// IMPORTAR ARCHIVO .UJS
+function importApp(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const content = e.target.result;
+        const metaMatch = content.match(/\/\*METADATA:(.*)\*\//);
+        if (metaMatch) {
+            const meta = JSON.parse(metaMatch[1]);
+            const code = content.split('*/')[1];
+            createDesktopIcon(meta.name, meta.icon, code);
+        }
+    };
+    reader.readAsText(file);
+}
+
+function createDesktopIcon(name, iconUrl, code) {
+    const div = document.createElement('div');
+    div.className = "icon";
+    div.innerHTML = `<img src="${iconUrl}"><span>${name}</span>`;
+    div.onclick = () => {
+        try {
+            const runner = new Function('ui', 'sys', code);
+            runner(ui, sys);
+        } catch(e) { alert("Error: " + e.message); }
+    };
+    document.getElementById('desktop').appendChild(div);
+}
+
+// Reloj de la Taskbar
+setInterval(() => {
+    document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+}, 1000);
+
+// Drag System
+document.querySelectorAll('.win-header').forEach(h => {
+    h.onmousedown = (e) => {
+        let w = h.parentElement;
+        let ox = e.clientX - w.offsetLeft, oy = e.clientY - w.offsetTop;
+        document.onmousemove = (e) => { w.style.left = (e.clientX - ox) + 'px'; w.style.top = (e.clientY - oy) + 'px'; };
+        document.onmouseup = () => document.onmousemove = null;
+    };
+});
+</script>
+</body>
+</html>
